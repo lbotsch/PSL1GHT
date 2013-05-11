@@ -34,6 +34,7 @@ FSELF_NPDRM		:=	$(FSELF) -n
 # signed SELF type4 / type8 tools
 SELF			:=	make_self
 SELF_NPDRM		:=	make_self_npdrm
+OSCE := oscetool
 
 # NPDRM pkg tool
 PACKAGE_FINALIZE	:=	package_finalize
@@ -61,7 +62,12 @@ BUILDDIR		?=	$(CURDIR)/build
 	$(VERB) echo building pkg ... $(notdir $@)
 	$(VERB) mkdir -p $(BUILDDIR)/pkg/USRDIR
 	$(VERB) cp $(ICON0) $(BUILDDIR)/pkg/ICON0.PNG
-	$(VERB) $(SELF_NPDRM) $(BUILDDIR)/$(basename $(notdir $<)).elf $(BUILDDIR)/pkg/USRDIR/EBOOT.BIN $(CONTENTID) >> /dev/null
+	$(VERB) $(OSCE) -v --sce-type=SELF --compress-data=TRUE \
+	--skip-sections=TRUE --key-revision=10 --self-auth-id=1010000001000003 \
+	--self-add-shdrs=TRUE --self-vendor-id=01000002 --self-type=NPDRM \
+	--self-app-version=0001000000000000 --self-fw-version=0003006000000000 \
+	--np-license-type=FREE --np-content-id=$(CONTENTID) --np-app-type=EXEC \
+	--np-real-fname=EBOOT.BIN --encrypt $(BUILDDIR)/$(basename $(notdir $<)).elf $(BUILDDIR)/pkg/USRDIR/EBOOT.BIN >> /dev/null
 	$(VERB) $(SFO) --title "$(TITLE)" --appid "$(APPID)" -f $(SFOXML) $(BUILDDIR)/pkg/PARAM.SFO
 	$(VERB) if [ -n "$(PKGFILES)" -a -d "$(PKGFILES)" ]; then cp -rf $(PKGFILES)/* $(BUILDDIR)/pkg/; fi
 	$(VERB) $(PKG) --contentid $(CONTENTID) $(BUILDDIR)/pkg/ $@ >> /dev/null
